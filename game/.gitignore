@@ -1,0 +1,6 @@
+Game 
+SecGame 
+*.o 
+*.exe 
+Makefile.deps
+default.res

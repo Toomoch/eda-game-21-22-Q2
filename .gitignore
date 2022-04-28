@@ -4,3 +4,4 @@ SecGame
 *.exe 
 Makefile.deps
 default.res
+.vscode

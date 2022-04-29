@@ -25,7 +25,14 @@ struct PLAYER_NAME : public Player {
   /**
    * Play method, invoked once per each round.
    */
-  virtual void play () {
+  virtual void play () 
+  {
+    //20 nans (dwarves) per jugador
+    //5 mags (wizards) per jugador
+
+    //4 trolls enemics SEMPRE
+    //1 Balrog SEMPRE
+    
   }
 
 };

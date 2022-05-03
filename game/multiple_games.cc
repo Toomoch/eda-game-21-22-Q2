@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <sys/wait.h>
 #include <sys/types.h>
@@ -37,7 +38,7 @@ int main (int argc, char *argv[]) {
             sprintf(buf2, "%i.txt", i);
             close(2);
             open(buf2, O_WRONLY | O_TRUNC | O_CREAT, 0666);
-            execlp("./Game", "./Game", argv[1], argv[2], argv[3], argv[4], "-s", buf, "-i", "default.cnf", "-o", "default.out", NULL);            
+            execlp("./Game", "./Game", argv[1], argv[2], argv[3], argv[4], "-s", buf, "-i", "default.cnf", "-o", "default.res", NULL);            
             exit(0);
         }
     }

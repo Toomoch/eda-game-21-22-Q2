@@ -5,3 +5,4 @@ SecGame
 Makefile.deps
 default.res
 .vscode
+*.out

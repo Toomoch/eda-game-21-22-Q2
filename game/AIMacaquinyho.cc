@@ -31,25 +31,28 @@ struct PLAYER_NAME : public Player {
    */
   #define TAULER_SIZE 60
   int INF = numeric_limits<int>::max();
+  int bal = balrog_id();
 
-  bool pos_legal (Pos pos) {
-    return pos.i >= 0 and pos.j >= 0 and pos.i < TAULER_SIZE and pos.j < TAULER_SIZE 
-    and cell(pos).type == Granite;
+  bool avoid (Pos pos) 
+  {
+    return cell(pos).type != Granite and cell(pos).type != Abyss;
   }
 
   bool target (Pos pos)
   {
-    return cell(pos).type == Cave and cell(pos).treasure;
+    //return cell(pos).type ==  and cell(pos).treasure;
+    Cell test = cell(pos);
+    return unit(test.id).type == Balrog;
   }
 
-  bool pos_stop_early (Pos pos)
+  bool stop_early (Pos pos)
   {
-
+    return false;
   }
 
   int bfs (Pos orig) {
     vector<vector<int> > dist(TAULER_SIZE,vector<int>(TAULER_SIZE, INF));
-    if (pos_stop_early) return 0;
+    if (stop_early(orig)) return 0;
 
     queue<Pos> Q;
     Q.push(orig);
@@ -59,7 +62,7 @@ struct PLAYER_NAME : public Player {
       Pos p = Q.front(); Q.pop();
       for (int k = 0; k < 8; ++k){
         Pos nova = p + Dir(k);
-        if (pos_legal(nova) and dist[nova.i][nova.j] == INF) 
+        if (pos_ok(nova) and avoid(nova) and dist[nova.i][nova.j] == INF) 
         {
           dist[nova.i][nova.j] = dist[p.i][p.j] + 1;
           if (target(nova)) return dist[nova.i][nova.j];
@@ -77,6 +80,24 @@ struct PLAYER_NAME : public Player {
     for (int i = 0; i < n; ++i) 
     {
       int id = D[i];
+      Unit nan = unit(id);
+      pair<Dir,int> distmin; //dir,min
+      distmin.second = -1;
+      for (int k = 0; k < 8; k++)
+      {
+        Dir newdir = Dir(k);
+        Pos newpos = nan.pos + newdir;
+        int dist = bfs(newpos);
+        if (dist < distmin.second) 
+        {
+          distmin.first = newdir; 
+          distmin.second = dist;
+        }
+      }
+      if (distmin.second != -1 )command(id, distmin.first);
+      cerr << "command" <<endl;
+      
+      
     }
   }
 

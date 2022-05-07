@@ -35,8 +35,8 @@ struct PLAYER_NAME : public Player {
     VI D = dwarves(me());
     int n = D.size();
     VI perm = random_permutation(n);
-    for (int i = 0; i < n; ++i) {
       // id is an own dwarf. For some reason (or not) we treat our dwarves in random order.
+    for (int i = 0; i < n; ++i) {
       int id = D[perm[i]];
       if (random(0, 2) == 0) command(id, Dir(random(0, 7))); // With probability 1/3, we move at random.
       else { // Otherwise, ...

@@ -29,50 +29,80 @@ struct PLAYER_NAME : public Player {
   /**
    * Play method, invoked once per each round.
    */
-  #define TAULER_SIZE 60
   int INF = numeric_limits<int>::max();
   int bal = balrog_id();
 
-  bool avoid (Pos pos) 
+  bool avoid (Pos &pos) 
   {
+    //bool test = cell(pos).id != -1;
     return cell(pos).type != Granite and cell(pos).type != Abyss;
+    //return ((cell(pos).type == Cave) or (cell(pos).type == Rock));
   }
 
-  bool target (Pos pos)
+  bool target (Pos &pos)
   {
-    //return cell(pos).type ==  and cell(pos).treasure;
-    Cell test = cell(pos);
-    return unit(test.id).type == Balrog;
+    return cell(pos).treasure;
   }
 
-  bool stop_early (Pos pos)
+  bool stop_early (Pos &pos)
   {
-    return false;
+    return cell(pos).treasure;
   }
 
-  int bfs (Pos orig) {
-    vector<vector<int> > dist(TAULER_SIZE,vector<int>(TAULER_SIZE, INF));
+  int bfs (Pos &orig) {
+    vector<vector<int> > dist(rows(),vector<int>(cols(), INF));
     if (stop_early(orig)) return 0;
 
     queue<Pos> Q;
     Q.push(orig);
     dist[orig.i][orig.j] = 0;
     
-    while (not Q.empty()) {
-      Pos p = Q.front(); Q.pop();
-      for (int k = 0; k < 8; ++k){
+    while (not Q.empty()) 
+    {
+      Pos p = Q.front(); 
+      Q.pop();
+      for (int k = 0; k < 8; ++k)
+      {
         Pos nova = p + Dir(k);
+        
         if (pos_ok(nova) and avoid(nova) and dist[nova.i][nova.j] == INF) 
         {
           dist[nova.i][nova.j] = dist[p.i][p.j] + 1;
-          if (target(nova)) return dist[nova.i][nova.j];
+          if (target(nova))
+
+          {
+            
+            return dist[nova.i][nova.j];
+          }
           Q.push(nova);
         }
       }
     }
-    return -1;
+    return INF;
     
   }
+
+  bool attack(Unit &nan)
+  {
+    
+    for (int j = 0; j < 8; j++)
+    {
+      Dir newdir = Dir(j);
+      Pos newpos = nan.pos + newdir;
+      if (pos_ok(newpos)) 
+      {
+        int id2 = cell(newpos).id;
+        if (id2 != -1 and unit(id2).player != me()) 
+        { 
+          command(nan.id, Dir(j));
+          return true;
+        }
+      }
+    }
+    return false;
+
+  }
+
   void nans ()
   {
     VI D = dwarves(me());
@@ -81,29 +111,42 @@ struct PLAYER_NAME : public Player {
     {
       int id = D[i];
       Unit nan = unit(id);
-      pair<Dir,int> distmin; //dir,min
-      distmin.second = -1;
-      for (int k = 0; k < 8; k++)
+      
+      Dir movedir = None;
+      int distmin = INF;
+      if (not attack(nan))
       {
-        Dir newdir = Dir(k);
-        Pos newpos = nan.pos + newdir;
-        int dist = bfs(newpos);
-        if (dist < distmin.second) 
+        for (int k = 0; k < 8; k++)
         {
-          distmin.first = newdir; 
-          distmin.second = dist;
+          
+          Dir newdir = Dir(k);
+          Pos newpos = nan.pos + newdir;
+          
+          if (pos_ok(newpos) and avoid(newpos))
+          {
+            int dist = bfs(newpos);
+            if (dist < distmin) 
+            {
+              movedir = newdir; 
+              distmin = dist;
+            }
+          }
         }
-      }
-      if (distmin.second != -1 )command(id, distmin.first);
-      cerr << "command" <<endl;
-      
-      
+
+        if (distmin != INF)
+        {
+          cerr<<movedir<<nan.pos<<endl;
+          command(id, movedir);
+        } 
+        
+      } 
     }
   }
 
   virtual void play () 
   {
     nans();
+
     
   }
 

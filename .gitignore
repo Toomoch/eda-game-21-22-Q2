@@ -6,3 +6,4 @@ Makefile.deps
 default.res
 .vscode
 *.out
+*.txt

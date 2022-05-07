@@ -71,7 +71,7 @@ struct PLAYER_NAME : public Player {
         if (pos_ok(nova) and avoid(nova) and dist[nova.i][nova.j] == INF) 
         {
           if(cell(nova).type == Rock){
-            dist[nova.i][nova.j] = dist[p.i][p.j] + cell(nova).turns;
+            dist[nova.i][nova.j] = dist[p.i][p.j] + cell(nova).turns+1;
           }
           else{
             dist[nova.i][nova.j] = dist[p.i][p.j] + 1;
@@ -80,7 +80,7 @@ struct PLAYER_NAME : public Player {
             dist_min=dist[nova.i][nova.j];
             //return dist[nova.i][nova.j];
           }
-          if (dist_min>dist[nova.i][nova.j]){
+          if (dist_min>dist[nova.i][nova.j]+1){
             fin=false;
           }
           Q.push(nova);
@@ -139,6 +139,9 @@ struct PLAYER_NAME : public Player {
           if (pos_ok(newpos) and avoid(newpos))
           {
             int dist = bfs(newpos);
+            if(cell(newpos).type == Rock){
+              dist=dist+cell(newpos).turns;
+            }
             if (dist < distmin and Targeted[newpos.i][newpos.j]) 
             {
               movedir = newdir; 
@@ -150,7 +153,12 @@ struct PLAYER_NAME : public Player {
         if (distmin != INF)
         {
           Pos newpos = nan.pos + movedir;
-          Targeted[newpos.i][newpos.j]=false;
+          if(cell(newpos).type == Rock){
+            Targeted[nan.pos.i][nan.pos.j]=false;
+          }
+          else{
+            Targeted[newpos.i][newpos.j]=false;
+          }
           command(id, movedir);
         } 
         

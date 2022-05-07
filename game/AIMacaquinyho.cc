@@ -34,8 +34,7 @@ struct PLAYER_NAME : public Player {
 
   bool avoid (Pos &pos) 
   {
-    //bool test = cell(pos).id != -1;
-    return cell(pos).type != Granite and cell(pos).type != Abyss;
+    return cell(pos).type != Granite and cell(pos).type != Abyss /*and cell(pos).id != -1 and unit(cell(pos).id).type != Orc*/;
     //return ((cell(pos).type == Cave) or (cell(pos).type == Rock));
   }
 
@@ -57,28 +56,42 @@ struct PLAYER_NAME : public Player {
     Q.push(orig);
     dist[orig.i][orig.j] = 0;
     
+  int dist_min= INF;
+  bool fin=true;
+
     while (not Q.empty()) 
     {
       Pos p = Q.front(); 
       Q.pop();
+      fin=true;
       for (int k = 0; k < 8; ++k)
       {
         Pos nova = p + Dir(k);
         
         if (pos_ok(nova) and avoid(nova) and dist[nova.i][nova.j] == INF) 
         {
-          dist[nova.i][nova.j] = dist[p.i][p.j] + 1;
-          if (target(nova))
-
-          {
-            
-            return dist[nova.i][nova.j];
+          if(cell(nova).type == Rock){
+            dist[nova.i][nova.j] = dist[p.i][p.j] + cell(nova).turns;
+          }
+          else{
+            dist[nova.i][nova.j] = dist[p.i][p.j] + 1;
+          }
+          if (target(nova) and dist_min>=dist[nova.i][nova.j]){
+            dist_min=dist[nova.i][nova.j];
+            //return dist[nova.i][nova.j];
+          }
+          if (dist_min>dist[nova.i][nova.j]){
+            fin=false;
           }
           Q.push(nova);
         }
       }
+      if(fin and dist_min!=INF){
+        return dist_min;
+      }
     }
-    return INF;
+    return dist_min;
+    //return INF;
     
   }
 
@@ -91,8 +104,8 @@ struct PLAYER_NAME : public Player {
       Pos newpos = nan.pos + newdir;
       if (pos_ok(newpos)) 
       {
-        int id2 = cell(newpos).id;
-        if (id2 != -1 and unit(id2).player != me()) 
+        int idattacked = cell(newpos).id;
+        if (idattacked != -1 and unit(idattacked).player != me()) 
         { 
           command(nan.id, Dir(j));
           return true;
@@ -105,6 +118,7 @@ struct PLAYER_NAME : public Player {
 
   void nans ()
   {
+    vector<vector <bool> > Targeted (rows(), vector<bool> (cols(),true ));
     VI D = dwarves(me());
     int n = D.size();
     for (int i = 0; i < n; ++i) 
@@ -125,7 +139,7 @@ struct PLAYER_NAME : public Player {
           if (pos_ok(newpos) and avoid(newpos))
           {
             int dist = bfs(newpos);
-            if (dist < distmin) 
+            if (dist < distmin and Targeted[newpos.i][newpos.j]) 
             {
               movedir = newdir; 
               distmin = dist;
@@ -135,7 +149,8 @@ struct PLAYER_NAME : public Player {
 
         if (distmin != INF)
         {
-          cerr<<movedir<<nan.pos<<endl;
+          Pos newpos = nan.pos + movedir;
+          Targeted[newpos.i][newpos.j]=false;
           command(id, movedir);
         } 
         

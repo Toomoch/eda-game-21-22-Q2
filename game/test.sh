@@ -1,1 +1,1 @@
-./Game Macaquinyho Dummy Dummy Dummy -s 30 -i default.cnf -o default.res &> test.txt
+./Game Macaquinyho Dummy Dummy Dummy -s 428624 -i default.cnf -o default.res &> test.txt

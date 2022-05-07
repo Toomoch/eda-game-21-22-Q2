@@ -83,7 +83,9 @@ struct PLAYER_NAME : public Player {
           if (dist_min>dist[nova.i][nova.j]+1){
             fin=false;
           }
-          Q.push(nova);
+          if(dist_min>dist[nova.i][nova.j]){
+            Q.push(nova);
+          }
         }
       }
       if(fin and dist_min!=INF){

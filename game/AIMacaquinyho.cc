@@ -49,14 +49,16 @@ struct PLAYER_NAME : public Player {
     return cell(pos).treasure;
   }
 
-  int bfs (Pos &orig) {
+  Dir bfs (Pos &orig) {
     vector<vector<int> > dist(rows(),vector<int>(cols(), INF));
-    if (stop_early(orig)) return 0;
-
+    if (stop_early(orig)) return None;
+    //Pos temp = Pos(-1,-1);
+    vector<vector<Dir> > parent(rows(),vector<Dir>(cols(),None));
     queue<Pos> Q;
     Q.push(orig);
     dist[orig.i][orig.j] = 0;
     
+
     while (not Q.empty()) 
     {
       Pos p = Q.front(); 
@@ -69,11 +71,22 @@ struct PLAYER_NAME : public Player {
         {
           dist[nova.i][nova.j] = dist[p.i][p.j] + 1;
           if (target(nova))
-
           {
-            
+            vector<Pos> path;
+            path.push_back(nova);
+            Pos tracer = nova;
+
+            while(tracer != Pos(0,0))
+            {
+              tracer = parent[tracer.i][tracer.j];
+              path.push_back(tracer);
+
+            }
+            return path[path.size()-2];
+
             return dist[nova.i][nova.j];
           }
+          parent[nova.i][nova.i] = Dir(k);
           Q.push(nova);
         }
       }
@@ -135,7 +148,7 @@ struct PLAYER_NAME : public Player {
 
         if (distmin != INF)
         {
-          cerr<<movedir<<nan.pos<<endl;
+          //cerr<<movedir<<nan.pos<<endl;
           command(id, movedir);
         } 
         

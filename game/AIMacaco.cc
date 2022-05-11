@@ -8,7 +8,7 @@
  * Write the name of your player and save this file
  * with the same name and .cc extension.
  */
-#define PLAYER_NAME Macaquinyho
+#define PLAYER_NAME Macaco
 
 
 struct PLAYER_NAME : public Player {
@@ -25,7 +25,6 @@ struct PLAYER_NAME : public Player {
    * Types and attributes for your player can be defined here.
    */
   typedef vector<int> VI;
-  map<int, int> kind;
   /**
    * Play method, invoked once per each round.
    */
@@ -35,7 +34,9 @@ struct PLAYER_NAME : public Player {
   bool avoid (Pos &pos) 
   {
     //bool test = cell(pos).id != -1;
+    
     return cell(pos).type != Granite and cell(pos).type != Abyss;
+
     //return ((cell(pos).type == Cave) or (cell(pos).type == Rock));
   }
 
@@ -56,10 +57,11 @@ struct PLAYER_NAME : public Player {
     }
   }
 
-  Dir bfs (Pos &orig) {
+  Dir dijkstra (Pos &orig) {
     if (target(orig)) return None;
     vector<vector<int> > dist(rows(),vector<int>(cols(), INF));
     vector<vector<bool> > vis(rows(),vector<bool>(cols(), false));
+
     vector<vector<int> > parent(rows(),vector<int>(cols(),8));
     priority_queue<pair<int,Pos >,vector<pair<int,Pos > >,greater<pair<int,Pos > > > Q;
     Q.push(make_pair(weight(orig),orig));
@@ -136,7 +138,7 @@ struct PLAYER_NAME : public Player {
 
       if (not attack(nan)) 
       {
-        command(id, bfs(nan.pos));
+        command(id, dijkstra(nan.pos));
       }
     }
   }

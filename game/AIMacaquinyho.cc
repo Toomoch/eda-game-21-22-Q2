@@ -53,11 +53,16 @@ struct PLAYER_NAME : public Player {
     vector<vector<int> > dist(rows(),vector<int>(cols(), INF));
     if (stop_early(orig)) return None;
     //Pos temp = Pos(-1,-1);
-    vector<vector<Dir> > parent(rows(),vector<Dir>(cols(),None));
+    vector<vector<int> > parent(rows(),vector<int>(cols(),8));
     queue<Pos> Q;
     Q.push(orig);
     dist[orig.i][orig.j] = 0;
     
+    for (int i = 0; i < 8; i++)
+    {
+      Pos temp = orig + Dir(i);
+      if (pos_ok(temp)) parent[temp.i][temp.j] = i;
+    }
 
     while (not Q.empty()) 
     {
@@ -70,28 +75,16 @@ struct PLAYER_NAME : public Player {
         if (pos_ok(nova) and avoid(nova) and dist[nova.i][nova.j] == INF) 
         {
           dist[nova.i][nova.j] = dist[p.i][p.j] + 1;
+          if (nova != orig + Dir(k)) parent[nova.i][nova.j] = parent[p.i][p.j];
           if (target(nova))
-          {
-            vector<Pos> path;
-            path.push_back(nova);
-            Pos tracer = nova;
-
-            while(tracer != Pos(0,0))
-            {
-              tracer = parent[tracer.i][tracer.j];
-              path.push_back(tracer);
-
-            }
-            return path[path.size()-2];
-
-            return dist[nova.i][nova.j];
+          { 
+            return Dir(parent[nova.i][nova.j]);
           }
-          parent[nova.i][nova.i] = Dir(k);
           Q.push(nova);
         }
       }
     }
-    return INF;
+    return None;
     
   }
 
@@ -125,34 +118,13 @@ struct PLAYER_NAME : public Player {
       int id = D[i];
       Unit nan = unit(id);
       
-      Dir movedir = None;
+      Dir movedir = bfs(nan.pos);
       int distmin = INF;
-      if (not attack(nan))
-      {
-        for (int k = 0; k < 8; k++)
-        {
-          
-          Dir newdir = Dir(k);
-          Pos newpos = nan.pos + newdir;
-          
-          if (pos_ok(newpos) and avoid(newpos))
-          {
-            int dist = bfs(newpos);
-            if (dist < distmin) 
-            {
-              movedir = newdir; 
-              distmin = dist;
-            }
-          }
-        }
 
-        if (distmin != INF)
-        {
-          //cerr<<movedir<<nan.pos<<endl;
-          command(id, movedir);
-        } 
-        
-      } 
+      if (not attack(nan)) 
+      {
+        command(id, bfs(nan.pos)); 
+      }
     }
   }
 

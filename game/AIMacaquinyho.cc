@@ -80,19 +80,22 @@ struct PLAYER_NAME : public Player {
       if (not vis[p.i][p.j])
       {
         vis[p.i][p.j] = true;
+        if (pos_ok(p) and target(p))
+        { 
+          return Dir(parent[p.i][p.j]);
+        }
+
         for (int k = 0; k < 8; ++k)
         {
           Pos nova = p + Dir(k);
           
-          if (pos_ok(nova) and avoid(nova) and dist[nova.i][nova.j] == INF) 
+          if (pos_ok(nova) and avoid(nova) and dist[nova.i][nova.j] > dist[p.i][p.j] + weight(nova)) 
           {
-            dist[nova.i][nova.j] = dist[p.i][p.j] + 1;
+
+            dist[nova.i][nova.j] = dist[p.i][p.j] + weight(nova);
             if (nova != orig + Dir(k)) parent[nova.i][nova.j] = parent[p.i][p.j];
-            if (target(nova))
-            { 
-              return Dir(parent[nova.i][nova.j]);
-            }
-            Q.push(nova);
+            
+            Q.push(make_pair(dist[nova.i][nova.j],nova));
           }
         }
       }

@@ -44,19 +44,27 @@ struct PLAYER_NAME : public Player {
     return cell(pos).treasure;
   }
 
-  bool stop_early (Pos &pos)
+  int weight (Pos &pos)
   {
-    return cell(pos).treasure;
+    if(cell(pos).type == Rock)
+    {
+      return cell(pos).turns + 1;
+    }
+    else
+    {
+      return 1;
+    }
   }
 
   Dir bfs (Pos &orig) {
+    if (target(orig)) return None;
     vector<vector<int> > dist(rows(),vector<int>(cols(), INF));
-    if (stop_early(orig)) return None;
+    vector<vector<bool> > vis(rows(),vector<bool>(cols(), false));
     //Pos temp = Pos(-1,-1);
     vector<vector<int> > parent(rows(),vector<int>(cols(),8));
-    queue<Pos> Q;
-    Q.push(orig);
-    dist[orig.i][orig.j] = 0;
+    priority_queue<pair<int,Pos >,vector<pair<int,Pos > >,greater<pair<int,Pos > > > Q;
+    Q.push(make_pair(weight(orig),orig));
+    dist[orig.i][orig.j] = weight(orig);
     
     for (int i = 0; i < 8; i++)
     {
@@ -66,23 +74,29 @@ struct PLAYER_NAME : public Player {
 
     while (not Q.empty()) 
     {
-      Pos p = Q.front(); 
+      int d = Q.top().first; 
+      Pos p = Q.top().second; 
       Q.pop();
-      for (int k = 0; k < 8; ++k)
+      if (not vis[p.i][p.j])
       {
-        Pos nova = p + Dir(k);
-        
-        if (pos_ok(nova) and avoid(nova) and dist[nova.i][nova.j] == INF) 
+        vis[p.i][p.j] = true;
+        for (int k = 0; k < 8; ++k)
         {
-          dist[nova.i][nova.j] = dist[p.i][p.j] + 1;
-          if (nova != orig + Dir(k)) parent[nova.i][nova.j] = parent[p.i][p.j];
-          if (target(nova))
-          { 
-            return Dir(parent[nova.i][nova.j]);
+          Pos nova = p + Dir(k);
+          
+          if (pos_ok(nova) and avoid(nova) and dist[nova.i][nova.j] == INF) 
+          {
+            dist[nova.i][nova.j] = dist[p.i][p.j] + 1;
+            if (nova != orig + Dir(k)) parent[nova.i][nova.j] = parent[p.i][p.j];
+            if (target(nova))
+            { 
+              return Dir(parent[nova.i][nova.j]);
+            }
+            Q.push(nova);
           }
-          Q.push(nova);
         }
       }
+      
     }
     return None;
     

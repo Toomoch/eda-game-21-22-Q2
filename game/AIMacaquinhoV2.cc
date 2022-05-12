@@ -8,7 +8,7 @@
  * Write the name of your player and save this file
  * with the same name and .cc extension.
  */
-#define PLAYER_NAME Macaco
+#define PLAYER_NAME MacaquinhoV2
 
 
 struct PLAYER_NAME : public Player {
@@ -33,11 +33,10 @@ struct PLAYER_NAME : public Player {
 
   bool avoid (Pos &pos) 
   {
-    //bool test = cell(pos).id != -1;
-    
-    return cell(pos).type != Granite and cell(pos).type != Abyss;
-
-    //return ((cell(pos).type == Cave) or (cell(pos).type == Rock));
+    //bool test = true;
+    //if (cell(pos).id != -1) test = unit(cell(pos).id).type != Orc and unit(cell(pos).id).type != Troll and unit(cell(pos).id).type != Balrog;
+  bool test = cell(pos).id != -1 and unit(cell(pos).id).player == me() and unit(cell(pos).id).type == Wizard;
+    return cell(pos).type != Granite and cell(pos).type != Abyss and not test;
   }
 
   bool target (Pos &pos)
@@ -56,6 +55,7 @@ struct PLAYER_NAME : public Player {
       return 1;
     }
   }
+
 
   Dir dijkstra (Pos &orig) {
     if (target(orig)) return None;
@@ -106,6 +106,73 @@ struct PLAYER_NAME : public Player {
     
   }
 
+
+  bool stop_early_wizard(Pos &pos)
+  {
+    for (int i = 0; i < 8; i+=2)
+    {
+      Pos newpos = pos + Dir(i);
+
+      if (pos_ok(newpos))
+      {
+        return (cell(newpos).id != -1 and unit(cell(newpos).id).player == me() and unit(cell(newpos).id).type == Dwarf);
+      }
+    }
+    return false;
+    
+  }
+
+  bool target_wizard(Pos &pos)
+  {
+    return (cell(pos).id != -1 and unit(cell(pos).id).player == me() and unit(cell(pos).id).type == Dwarf);
+  }
+
+  bool avoid_wizard (Pos &pos) 
+  {
+    //bool test = true;
+    //if (cell(pos).id != -1) test = unit(cell(pos).id).type != Orc and unit(cell(pos).id).type != Troll and unit(cell(pos).id).type != Balrog;
+    //bool test = cell(pos).id != -1 and unit(cell(pos).id).player == me() and unit(cell(pos).id).type == Wizard;
+    return cell(pos).type != Granite and cell(pos).type != Abyss and cell(pos).type != Rock; 
+  }
+
+  Dir bfs (Pos &orig) {
+    if (stop_early_wizard(orig)) return None;
+    vector<vector<int> > dist(rows(),vector<int>(cols(), INF));
+    vector<vector<int> > parent(rows(),vector<int>(cols(),8));
+    queue<Pos> Q;
+    Q.push(orig);
+    dist[orig.i][orig.j] = 0;
+    
+    for (int i = 0; i < 8; i+=2)
+    {
+      Pos temp = orig + Dir(i);
+      if (pos_ok(temp)) parent[temp.i][temp.j] = i;
+    }
+
+    while (not Q.empty()) 
+    {
+      Pos p = Q.front(); 
+      Q.pop();
+      for (int k = 0; k < 8; k+=2)
+      {
+        Pos nova = p + Dir(k);
+        
+        if (pos_ok(nova) and avoid_wizard(nova) and dist[nova.i][nova.j] == INF) 
+        {
+          dist[nova.i][nova.j] = dist[p.i][p.j] + 1;
+          if (nova != orig + Dir(k)) parent[nova.i][nova.j] = parent[p.i][p.j];
+          if (target_wizard(nova))
+          { 
+            return Dir(parent[nova.i][nova.j]);
+          }
+          Q.push(nova);
+        }
+      }
+    }
+    return None;
+    
+  }
+
   bool attack(Unit &nan)
   {
     
@@ -129,6 +196,7 @@ struct PLAYER_NAME : public Player {
 
   void nans ()
   {
+    vector<vector <bool> > Targeted (rows(), vector<bool> (cols(),true));
     VI D = dwarves(me());
     int n = D.size();
     for (int i = 0; i < n; ++i) 
@@ -138,15 +206,44 @@ struct PLAYER_NAME : public Player {
 
       if (not attack(nan)) 
       {
-        command(id, dijkstra(nan.pos));
+
+        Dir newdir = dijkstra(nan.pos);
+        Pos newpos = nan.pos + newdir;
+        
+          command(id, newdir);
+        
+        
       }
+    }
+  }
+
+
+
+  void mags()
+  {
+    VI D = wizards(me());
+    int n = D.size();
+    for (int i = 0; i < n; ++i) 
+    {
+      int id = D[i];
+      Unit nan = unit(id);
+
+      
+
+        Dir newdir = bfs(nan.pos);
+        //Pos newpos = nan.pos + newdir;
+        
+          command(id, newdir);
+        
+        
+      
     }
   }
 
   virtual void play () 
   {
     nans();
-
+    mags();
     
   }
 

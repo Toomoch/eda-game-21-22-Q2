@@ -10,14 +10,15 @@
  */
 #define PLAYER_NAME MacaquinhoV2
 
-
-struct PLAYER_NAME : public Player {
+struct PLAYER_NAME : public Player
+{
 
   /**
    * Factory: returns a new instance of this class.
    * Do not modify this function.
    */
-  static Player* factory () {
+  static Player *factory()
+  {
     return new PLAYER_NAME;
   }
 
@@ -31,85 +32,99 @@ struct PLAYER_NAME : public Player {
   int INF = numeric_limits<int>::max();
   int bal = balrog_id();
 
-  bool avoid (Pos &pos) 
+  bool avoid(Pos &pos, vector<vector<int> > &dwarves_upd)
   {
-    //bool test = true;
-    //if (cell(pos).id != -1) test = unit(cell(pos).id).type != Orc and unit(cell(pos).id).type != Troll and unit(cell(pos).id).type != Balrog;
-  bool test = cell(pos).id != -1 and unit(cell(pos).id).player == me() and unit(cell(pos).id).type == Wizard;
-    return cell(pos).type != Granite and cell(pos).type != Abyss and not test;
+
+    // bool test = true;
+    // if (cell(pos).id != -1) test = unit(cell(pos).id).type != Orc and unit(cell(pos).id).type != Troll and unit(cell(pos).id).type != Balrog;
+    bool test = cell(pos).id != -1 and unit(cell(pos).id).player == me() and unit(cell(pos).id).type == Wizard;
+    return cell(pos).type != Granite and cell(pos).type != Abyss and not test and dwarves_upd[pos.i][pos.j] == -1; // arreglar
   }
 
-  bool target (Pos &pos)
+  bool target(Pos &pos)
   {
     return cell(pos).treasure;
   }
 
-  int weight (Pos &pos)
+  int weight(Pos &pos)
   {
-    if(cell(pos).type == Rock)
+    if (cell(pos).type == Rock)
     {
       return cell(pos).turns + 1;
     }
     else
     {
       return 1;
-    }
+    } // 84.8,86.9,//2000 85.95
   }
 
+  Dir dijkstra(Pos &orig, vector<vector<int> > &dwarves_upd)
+  {
+    if (target(orig))
+      return None;
+    vector<vector<int> > dist(rows(), vector<int>(cols(), INF));
+    vector<vector<bool> > vis(rows(), vector<bool>(cols(), false));
 
-  Dir dijkstra (Pos &orig) {
-    if (target(orig)) return None;
-    vector<vector<int> > dist(rows(),vector<int>(cols(), INF));
-    vector<vector<bool> > vis(rows(),vector<bool>(cols(), false));
-
-    vector<vector<int> > parent(rows(),vector<int>(cols(),8));
-    priority_queue<pair<int,Pos >,vector<pair<int,Pos > >,greater<pair<int,Pos > > > Q;
-    Q.push(make_pair(weight(orig),orig));
+    vector<vector<int> > parent(rows(), vector<int>(cols(), 8));
+    priority_queue<pair<int, Pos>, vector<pair<int, Pos> >, greater<pair<int, Pos> > > Q;
+    Q.push(make_pair(weight(orig), orig));
     dist[orig.i][orig.j] = weight(orig);
-    
+
     for (int i = 0; i < 8; i++)
     {
       Pos temp = orig + Dir(i);
-      if (pos_ok(temp)) parent[temp.i][temp.j] = i;
+      if (pos_ok(temp))
+        parent[temp.i][temp.j] = i;
     }
 
-    while (not Q.empty()) 
+    while (not Q.empty())
     {
-      int d = Q.top().first; 
-      Pos p = Q.top().second; 
+      int d = Q.top().first;
+      Pos p = Q.top().second;
       Q.pop();
       if (not vis[p.i][p.j])
       {
         vis[p.i][p.j] = true;
         if (pos_ok(p) and target(p))
-        { 
+        {
           return Dir(parent[p.i][p.j]);
         }
 
         for (int k = 0; k < 8; ++k)
         {
           Pos nova = p + Dir(k);
-          
-          if (pos_ok(nova) and avoid(nova) and dist[nova.i][nova.j] > dist[p.i][p.j] + weight(nova)) 
+
+          if (pos_ok(nova) and avoid(nova, dwarves_upd) and dist[nova.i][nova.j] > dist[p.i][p.j] + weight(nova))
           {
 
             dist[nova.i][nova.j] = dist[p.i][p.j] + weight(nova);
-            if (nova != orig + Dir(k)) parent[nova.i][nova.j] = parent[p.i][p.j];
-            
-            Q.push(make_pair(dist[nova.i][nova.j],nova));
+
+            bool nadie = true;
+            if (nova != orig + Dir(k))
+            {
+              parent[nova.i][nova.j] = parent[p.i][p.j];
+            }
+            else
+            {
+              /*if (alguien(nova.i, nova.j))
+              {
+                nadie = false;
+              }*/
+            }
+            if (nadie)
+            {
+              Q.push(make_pair(dist[nova.i][nova.j], nova));
+            }
           }
         }
       }
-      
     }
     return None;
-    
   }
-
 
   bool stop_early_wizard(Pos &pos)
   {
-    for (int i = 0; i < 8; i+=2)
+    for (int i = 0; i < 8; i += 2)
     {
       Pos newpos = pos + Dir(i);
 
@@ -119,7 +134,6 @@ struct PLAYER_NAME : public Player {
       }
     }
     return false;
-    
   }
 
   bool target_wizard(Pos &pos)
@@ -127,42 +141,46 @@ struct PLAYER_NAME : public Player {
     return (cell(pos).id != -1 and unit(cell(pos).id).player == me() and unit(cell(pos).id).type == Dwarf);
   }
 
-  bool avoid_wizard (Pos &pos) 
+  bool avoid_wizard(Pos &pos)
   {
-    //bool test = true;
-    //if (cell(pos).id != -1) test = unit(cell(pos).id).type != Orc and unit(cell(pos).id).type != Troll and unit(cell(pos).id).type != Balrog;
-    //bool test = cell(pos).id != -1 and unit(cell(pos).id).player == me() and unit(cell(pos).id).type == Wizard;
-    return cell(pos).type != Granite and cell(pos).type != Abyss and cell(pos).type != Rock; 
+    // bool test = true;
+    // if (cell(pos).id != -1) test = unit(cell(pos).id).type != Orc and unit(cell(pos).id).type != Troll and unit(cell(pos).id).type != Balrog;
+    // bool test = cell(pos).id != -1 and unit(cell(pos).id).player == me() and unit(cell(pos).id).type == Wizard;
+    return cell(pos).type != Granite and cell(pos).type != Abyss and cell(pos).type != Rock;
   }
 
-  Dir bfs (Pos &orig) {
-    if (stop_early_wizard(orig)) return None;
-    vector<vector<int> > dist(rows(),vector<int>(cols(), INF));
-    vector<vector<int> > parent(rows(),vector<int>(cols(),8));
+  Dir bfs(Pos &orig)
+  {
+    if (stop_early_wizard(orig))
+      return None;
+    vector<vector<int> > dist(rows(), vector<int>(cols(), INF));
+    vector<vector<int> > parent(rows(), vector<int>(cols(), 8));
     queue<Pos> Q;
     Q.push(orig);
     dist[orig.i][orig.j] = 0;
-    
-    for (int i = 0; i < 8; i+=2)
+
+    for (int i = 0; i < 8; i += 2)
     {
       Pos temp = orig + Dir(i);
-      if (pos_ok(temp)) parent[temp.i][temp.j] = i;
+      if (pos_ok(temp))
+        parent[temp.i][temp.j] = i;
     }
 
-    while (not Q.empty()) 
+    while (not Q.empty())
     {
-      Pos p = Q.front(); 
+      Pos p = Q.front();
       Q.pop();
-      for (int k = 0; k < 8; k+=2)
+      for (int k = 0; k < 8; k += 2)
       {
         Pos nova = p + Dir(k);
-        
-        if (pos_ok(nova) and avoid_wizard(nova) and dist[nova.i][nova.j] == INF) 
+
+        if (pos_ok(nova) and avoid_wizard(nova) and dist[nova.i][nova.j] == INF)
         {
           dist[nova.i][nova.j] = dist[p.i][p.j] + 1;
-          if (nova != orig + Dir(k)) parent[nova.i][nova.j] = parent[p.i][p.j];
+          if (nova != orig + Dir(k))
+            parent[nova.i][nova.j] = parent[p.i][p.j];
           if (target_wizard(nova))
-          { 
+          {
             return Dir(parent[nova.i][nova.j]);
           }
           Q.push(nova);
@@ -170,81 +188,87 @@ struct PLAYER_NAME : public Player {
       }
     }
     return None;
-    
   }
 
   bool attack(Unit &nan)
   {
-    
+
     for (int j = 0; j < 8; j++)
     {
       Dir newdir = Dir(j);
       Pos newpos = nan.pos + newdir;
-      if (pos_ok(newpos)) 
+      if (pos_ok(newpos))
       {
         int id2 = cell(newpos).id;
-        if (id2 != -1 and unit(id2).player != me()) 
-        { 
+        if (id2 != -1 and unit(id2).player != me())
+        {
           command(nan.id, Dir(j));
           return true;
         }
       }
     }
     return false;
-
   }
 
-  void nans ()
+  void move_dwarves(vector<vector<int> > &dwarves_upd)
   {
-    vector<vector <bool> > Targeted (rows(), vector<bool> (cols(),true));
     VI D = dwarves(me());
     int n = D.size();
-    for (int i = 0; i < n; ++i) 
+    for (int i = 0; i < n; ++i)
     {
       int id = D[i];
       Unit nan = unit(id);
 
-      if (not attack(nan)) 
+      dwarves_upd[nan.pos.i][nan.pos.j] = id;
+    }
+
+    for (int i = 0; i < n; ++i)
+    {
+      int id = D[i];
+      Unit nan = unit(id);
+
+      if (not attack(nan))
       {
 
-        Dir newdir = dijkstra(nan.pos);
+        Dir newdir = dijkstra(nan.pos, dwarves_upd);
         Pos newpos = nan.pos + newdir;
-        
-          command(id, newdir);
-        
-        
+        dwarves_upd[nan.pos.i][nan.pos.j] = -1;
+        dwarves_upd[newpos.i][newpos.j] = id;
+
+        command(id, newdir);
       }
     }
   }
 
-
-
-  void mags()
+  void move_wizards(vector<vector<int> > &dwarves_upd)
   {
     VI D = wizards(me());
     int n = D.size();
-    for (int i = 0; i < n; ++i) 
+    for (int i = 0; i < n; ++i)
     {
       int id = D[i];
       Unit nan = unit(id);
 
-      
-
-        Dir newdir = bfs(nan.pos);
-        //Pos newpos = nan.pos + newdir;
-        
-          command(id, newdir);
-        
-        
-      
+      Dir newdir = bfs(nan.pos);
+      command(id, newdir);
     }
   }
 
-  virtual void play () 
+  virtual void play()
   {
-    nans();
-    mags();
-    
+    vector<vector<int> > dwarves_upd(rows(), vector<int>(cols(), -1));
+    move_dwarves(dwarves_upd);
+    move_wizards(dwarves_upd);
+    /*
+    for (int i = 0; i < rows(); i++)
+    {
+      for (int j = 0; j < cols(); j++)
+      {
+        cerr << dwarves_upd[i][j] <<",";
+      }
+      cerr << endl;
+    }*/
+
   }
 
 };
@@ -253,4 +277,4 @@ struct PLAYER_NAME : public Player {
 /**
  * Do not modify the following line.
  */
-RegisterPlayer(PLAYER_NAME);
+    RegisterPlayer(PLAYER_NAME);
